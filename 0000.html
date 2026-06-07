@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Calculadora Numérica Móvil</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --input-bg: #f1f5f9;
+            --input-border: #cbd5e1;
+            --accent-color: #0284c7;
+            --accent-hover: #0369a1;
+            --text-color: #0f172a;
+            --text-muted: #64748b;
+            --success-bg: rgba(22, 163, 74, 0.1);
+            --success-border: #16a34a;
+            --success-text: #15803d;
+            --error-bg: rgba(220, 38, 38, 0.1);
+            --error-border: #dc2626;
+            --error-text: #b91c1c;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            padding: 16px;
+            min-height: 100vh;
+        }
+
+        .app-container {
+            max-width: 420px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        header {
+            text-align: center;
+            padding: 10px 0;
+        }
+
+        header h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 4px 16px rgba(15, 23, 42, 0.06);
+            border: 1px solid #e2e8f0;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        select,
+        input {
+            width: 100%;
+            padding: 14px;
+            background-color: var(--input-bg);
+            border: 2px solid var(--input-border);
+            border-radius: 12px;
+            font-size: 1rem;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        select:focus,
+        input:focus {
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 4px rgba(2, 132, 199, 0.15);
+            background-color: white;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        button {
+            width: 100%;
+            padding: 16px;
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: 14px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 8px;
+        }
+
+        button:active {
+            transform: scale(0.98);
+            background-color: var(--accent-hover);
+        }
+
+        .result-box {
+            display: none;
+            border-radius: 16px;
+            padding: 18px;
+            margin-top: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .success {
+            background-color: var(--success-bg);
+            border: 2px solid var(--success-border);
+            color: var(--success-text);
+            display: block;
+        }
+
+        .error {
+            background-color: var(--error-bg);
+            border: 2px solid var(--error-border);
+            color: var(--error-text);
+            display: block;
+        }
+
+        .result-title {
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+        }
+
+        .result-value {
+            font-size: 1.6rem;
+            font-weight: 800;
+            word-break: break-all;
+        }
+
+        /* Contenedor específico para la explicación analítica */
+        .explicacion-texto {
+            margin-top: 10px;
+            font-size: 0.9rem;
+            line-height: 1.4;
+            color: var(--text-color);
+            border-top: 1px dashed rgba(21, 128, 61, 0.3);
+            padding-top: 10px;
+        }
+
+        /* Contenedor del gráfico */
+        .chart-container {
+            display: none;
+            background-color: var(--card-bg);
+            border-radius: 20px;
+            padding: 16px;
+            box-shadow: 0 4px 16px rgba(15, 23, 42, 0.06);
+            border: 1px solid #e2e8f0;
+            margin-top: 8px;
+            position: relative;
+            width: 100%;
+            height: 280px;
+        }
+
+        .panel-metodo {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="app-container">
+        <header>
+            <h1>🧮 Métodos Numéricos</h1>
+        </header>
+
+        <div class="card">
+            <div class="form-group">
+                <label for="categoria">Categoría del Problema</label>
+                <select id="categoria" onchange="cambiarFormulario()">
+                    <option value="integracion">Integración Numérica</option>
+                    <option value="diferenciacion">Diferenciación Numérica</option>
+                    <option value="interpolacion">Interpolación Numérica</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="card">
+            <div id="panel-integracion" class="panel-metodo" style="display: block;">
+                <div class="form-group">
+                    <label for="metodo-int">Regla de Integración</label>
+                    <select id="metodo-int">
+                        <option value="trapecio">Método del Trapecio</option>
+                        <option value="simpson13">Simpson 1/3</option>
+                        <option value="simpson38">Simpson 3/8</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="fx-int">Función f(x)</label>
+                    <input type="text" id="fx-int" value="2x² + 3x + 5" placeholder="Ej: 2x² + 3x + 5">
+                </div>
+                <div class="grid-3">
+                    <div class="form-group">
+                        <label for="a-int">a (Límite inferior)</label>
+                        <input type="number" id="a-int" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="b-int">b (Límite superior)</label>
+                        <input type="number" id="b-int" value="2">
+                    </div>
+                    <div class="form-group">
+                        <label for="n-int">n (Intervalos)</label>
+                        <input type="number" id="n-int" value="6">
+                    </div>
+                </div>
+            </div>
+
+            <div id="panel-diferenciacion" class="panel-metodo">
+                <div class="form-group">
+                    <label for="tipo-dif">Esquema Diferencial</label>
+                    <select id="tipo-dif">
+                        <option value="central">Diferencia Central</option>
+                        <option value="forward">Hacia adelante</option>
+                        <option value="backward">Hacia atrás</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="fx-dif">Función f(x)</label>
+                    <input type="text" id="fx-dif" value="3x² - 4x - 2">
+                </div>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label for="x0-dif">x₀ (Punto)</label>
+                        <input type="number" id="x0-dif" value="1">
+                    </div>
+                    <div class="form-group">
+                        <label for="h-dif">h (Paso)</label>
+                        <input type="number" id="h-dif" value="0.01" step="any">
+                    </div>
+                </div>
+            </div>
+
+            <div id="panel-interpolacion" class="panel-metodo">
+                <div class="form-group">
+                    <label style="color: var(--accent-color); font-weight: bold;">Interpolación de Lagrange</label>
+                </div>
+                <div class="form-group">
+                    <label for="x-list">Puntos X (separados por comas)</label>
+                    <input type="text" id="x-list" value="1, 2, 3, 4">
+                </div>
+                <div class="form-group">
+                    <label for="y-list">Puntos Y (separados por comas)</label>
+                    <input type="text" id="y-list" value="1, 4, 9, 16">
+                </div>
+                <div class="form-group">
+                    <label for="x-eval">Valor de X a evaluar</label>
+                    <input type="number" id="x-eval" value="2.5" step="any">
+                </div>
+            </div>
+        </div>
+
+        <button onclick="calcularResultado()">Calcular</button>
+
+        <div id="resultado" class="result-box"></div>
+
+        <div id="grafica-contenedor" class="chart-container">
+            <canvas id="lagrangeChart"></canvas>
+        </div>
+    </div>
+
+    <script>
+        // Variable global para almacenar e invalidar la instancia del gráfico previo
+        let miGrafico = null;
+
+        function cambiarFormulario() {
+            const categoria = document.getElementById("categoria").value;
+            document.getElementById("resultado").style.display = "none";
+            document.getElementById("grafica-contenedor").style.display = "none";
+
+            document.getElementById("panel-integracion").style.display = "none";
+            document.getElementById("panel-diferenciacion").style.display = "none";
+            document.getElementById("panel-interpolacion").style.display = "none";
+
+            if (categoria === "integracion") {
+                document.getElementById("panel-integracion").style.display = "block";
+            } else if (categoria === "diferenciacion") {
+                document.getElementById("panel-diferenciacion").style.display = "block";
+            } else if (categoria === "interpolacion") {
+                document.getElementById("panel-interpolacion").style.display = "block";
+            }
+        }
+
+        function evaluarExpresionSegura(formula, x) {
+            try {
+                let expr = formula.toLowerCase().replace(/\s+/g, '')
+                    .replace(/x²/g, 'x**2').replace(/x³/g, 'x**3')
+                    .replace(/\^/g, '**')
+                    .replace(/(\d)(x)/g, '$1*$2')
+                    .replace(/(x)(\d)/g, '$1**$2');
+
+                expr = expr.replace(/x/g, `(${x})`);
+                return new Function(`return ${expr}`)() || 0;
+            } catch (e) {
+                return 0;
+            }
+        }
+
+        // Se extiende la función original para aceptar texto opcional de explicación analítica
+        function mostrarResultadoOk(titulo, valor, explicacion = "") {
+            const res = document.getElementById("resultado");
+            res.className = "result-box success";
+            res.style.display = "block";
+
+            let htmlContent = `<div class="result-title">${titulo}</div><div class="result-value">${Number(valor).toFixed(6)}</div>`;
+            if (explicacion) {
+                htmlContent += `<div class="explicacion-texto">${explicacion}</div>`;
+            }
+            res.innerHTML = htmlContent;
+        }
+
+        function mostrarResultadoError(mensaje) {
+            const res = document.getElementById("resultado");
+            res.className = "result-box error";
+            res.style.display = "block";
+            res.innerHTML = `<div class="result-title">⚠️ Error</div><div style="font-weight:600;">${mensaje}</div>`;
+            document.getElementById("grafica-contenedor").style.display = "none";
+        }
+
+        // Función matemática pura de Lagrange reutilizable para el cálculo y mapeo de la gráfica
+        function calcularLagrange(X, Y, xEval) {
+            let resultado = 0;
+            const n = X.length;
+            for (let i = 0; i < n; i++) {
+                let termino = Y[i];
+                for (let j = 0; j < n; j++) {
+                    if (i !== j) termino *= (xEval - X[j]) / (X[i] - X[j]);
+                }
+                resultado += termino;
+            }
+            return resultado;
+        }
+
+        function dibujarGraficaLagrange(X, Y, xEval, yEval) {
+            const ctx = document.getElementById('lagrangeChart').getContext('2d');
+            document.getElementById("grafica-contenedor").style.display = "block";
+
+            // Si ya existía una gráfica, se destruye para evitar superposiciones visuales al recalcular
+            if (miGrafico) {
+                miGrafico.destroy();
+            }
+
+            // Encontrar el rango dinámico de los datos introducidos para generar la curva suave
+            const minX = Math.min(...X, xEval);
+            const maxX = Math.max(...X, xEval);
+            const margen = (maxX - minX) * 0.15 || 1; // Margen dinámico del 15%
+
+            const puntosCurva = [];
+            const pasos = 50; // Densidad de la línea del polinomio
+            for (let i = 0; i <= pasos; i++) {
+                let xAct = (minX - margen) + ((maxX - minX + 2 * margen) * i / pasos);
+                let yAct = calcularLagrange(X, Y, xAct);
+                puntosCurva.push({ x: xAct, y: yAct });
+            }
+
+            // Convertir arreglos originales en formato de coordenadas legibles por Chart.js
+            const puntosOriginales = X.map((x, index) => ({ x: x, y: Y[index] }));
+
+            miGrafico = new Chart(ctx, {
+                type: 'scatter',
+                data: {
+                    datasets: [
+                        {
+                            label: 'Polinomio de Lagrange',
+                            data: puntosCurva,
+                            type: 'line',
+                            borderColor: '#0284c7',
+                            borderWidth: 2,
+                            pointRadius: 0, // Línea continua pura sin marcadores estorbosos
+                            fill: false,
+                            tension: 0.3
+                        },
+                        {
+                            label: 'Nodos Base (Datos)',
+                            data: puntosOriginales,
+                            backgroundColor: '#1e293b',
+                            pointRadius: 6,
+                            pointHoverRadius: 8
+                        },
+                        {
+                            label: 'Punto Evaluado',
+                            data: [{ x: xEval, y: yEval }],
+                            backgroundColor: '#dc2626',
+                            pointRadius: 8,
+                            pointHoverRadius: 10,
+                            borderWidth: 2,
+                            borderColor: '#ffffff'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                boxWidth: 12,
+                                font: { size: 10 }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            type: 'linear',
+                            position: 'bottom',
+                            grid: { color: '#e2e8f0' }
+                        },
+                        y: {
+                            grid: { color: '#e2e8f0' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function calcularResultado() {
+            const categoria = document.getElementById("categoria").value;
+            document.getElementById("resultado").style.display = "none";
+            document.getElementById("grafica-contenedor").style.display = "none";
+
+            try {
+                if (categoria === "integracion") {
+                    const metodo = document.getElementById("metodo-int").value;
+                    const fStr = document.getElementById("fx-int").value.trim();
+                    const a = parseFloat(document.getElementById("a-int").value);
+                    const b = parseFloat(document.getElementById("b-int").value);
+                    const n = parseInt(document.getElementById("n-int").value);
+
+                    if (isNaN(a) || isNaN(b) || isNaN(n) || n <= 0) throw new Error("Verifica los valores de a, b y n.");
+                    if (!fStr) throw new Error("Ingresa la función f(x)");
+
+                    const h = (b - a) / n;
+                    let suma = evaluarExpresionSegura(fStr, a) + evaluarExpresionSegura(fStr, b);
+
+                    if (metodo === "trapecio") {
+                        for (let i = 1; i < n; i++) suma += 2 * evaluarExpresionSegura(fStr, a + i * h);
+                        const resultado = (h / 2) * suma;
+                        mostrarResultadoOk("Integral (Trapecio)", resultado);
+                    } else if (metodo === "simpson13") {
+                        if (n % 2 !== 0) throw new Error("n debe ser par");
+                        for (let i = 1; i < n; i++) suma += (i % 2 === 0 ? 2 : 4) * evaluarExpresionSegura(fStr, a + i * h);
+                        const resultado = (h / 3) * suma;
+                        mostrarResultadoOk("Integral (Simpson 1/3)", resultado);
+                    } else if (metodo === "simpson38") {
+                        if (n % 3 !== 0) throw new Error("n debe ser múltiplo de 3");
+                        for (let i = 1; i < n; i++) suma += (i % 3 === 0 ? 2 : 3) * evaluarExpresionSegura(fStr, a + i * h);
+                        const resultado = (3 * h / 8) * suma;
+                        mostrarResultadoOk("Integral (Simpson 3/8)", resultado);
+                    }
+                }
+                else if (categoria === "diferenciacion") {
+                    const tipo = document.getElementById("tipo-dif").value;
+                    const fStr = document.getElementById("fx-dif").value.trim();
+                    const x0 = parseFloat(document.getElementById("x0-dif").value);
+                    const h = parseFloat(document.getElementById("h-dif").value);
+
+                    if (isNaN(x0) || isNaN(h) || h === 0) throw new Error("Verifica x0 y h");
+
+                    let resultado = 0;
+                    if (tipo === "forward") resultado = (evaluarExpresionSegura(fStr, x0 + h) - evaluarExpresionSegura(fStr, x0)) / h;
+                    else if (tipo === "backward") resultado = (evaluarExpresionSegura(fStr, x0) - evaluarExpresionSegura(fStr, x0 - h)) / h;
+                    else resultado = (evaluarExpresionSegura(fStr, x0 + h) - evaluarExpresionSegura(fStr, x0 - h)) / (2 * h);
+
+                    mostrarResultadoOk(`f'(${x0})`, resultado);
+                }
+                else if (categoria === "interpolacion") {
+                    const xStr = document.getElementById("x-list").value;
+                    const yStr = document.getElementById("y-list").value;
+                    const xEval = parseFloat(document.getElementById("x-eval").value);
+
+                    const X = xStr.split(",").map(v => parseFloat(v.trim()));
+                    const Y = yStr.split(",").map(v => parseFloat(v.trim()));
+
+                    if (X.length !== Y.length || X.some(isNaN) || Y.some(isNaN)) {
+                        throw new Error("X e Y deben tener la misma cantidad de números válidos");
+                    }
+                    if (X.length < 2) {
+                        throw new Error("Se requieren al menos 2 puntos para interpolar.");
+                    }
+
+                    // Se ejecuta el cálculo central
+                    const resultado = calcularLagrange(X, Y, xEval);
+
+                    // Redacción dinámica del análisis matemático basado en la posición de X
+                    let relacionMuestreo = "";
+                    const minX = Math.min(...X);
+                    const maxX = Math.max(...X);
+
+                    if (xEval >= minX && xEval <= maxX) {
+                        relacionMuestreo = "Este cálculo es una <strong>interpolación</strong>, lo que significa que el punto se encuentra dentro del rango conocido de los datos experimentales y posee alta confiabilidad.";
+                    } else {
+                        relacionMuestreo = "Este cálculo representa una <strong>extrapolación</strong>. El punto evaluado está fuera de tus nodos base, por lo que el resultado debe interpretarse con cautela debido al comportamiento oscilatorio natural de los polinomios de alto grado.";
+                    }
+
+                    const explicacionHTML = `<strong>Interpretación:</strong> El método construyó un polinomio único de grado ${X.length - 1} que pasa exactamente por todos tus nodos base. ${relacionMuestreo}`;
+
+                    // Renderizar respuesta en interfaz
+                    mostrarResultadoOk(`Y(${xEval})`, resultado, explicacionHTML);
+
+                    // Renderizar gráfica
+                    dibujarGraficaLagrange(X, Y, xEval, resultado);
+                }
+            } catch (err) {
+                mostrarResultadoError(err.message);
+            }
+        }
+    </script>
+</body>
+
+</html>
